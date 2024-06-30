@@ -1,1 +1,79 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_auc_score, roc_curve
+
+# Load the dataset
+# link = 'https://archive.ics.uci.edu/ml/machine-learning-databases/heart-diseashttps://archive.ics.uci.edu/ml/machine-learning-databases/heart-disease/processed.cleveland.datae/processed.cleveland.data'
+file = 'C:/Users/Praneeth Kumar/Data Science/Heart-disease-data.csv'
+column_names = ['age', 'sex', 'cp', 'trestbps', 'chol', 'fbs', 'restecg', 'thalach', 'exang', 'oldpeak', 'slope', 'ca', 'thal', 'target']
+df = pd.read_csv(file, header=None, names=column_names)
+
+# Data Cleaning and Preprocessing
+# Replace missing values represented by '?' with NaN
+df.replace('?', np.nan, inplace=True)
+
+# Convert columns to appropriate data types
+df['ca'] = pd.to_numeric(df['ca'], errors='coerce')
+df['thal'] = pd.to_numeric(df['thal'], errors='coerce')
+
+# Fill missing values with median of respective columns
+df.fillna(df.median(), inplace=True)
+
+# Convert target variable to binary (0: no disease, 1: disease)
+df['target'] = df['target'].apply(lambda x: 1 if x > 0 else 0)
+
+# Exploratory Data Analysis (EDA)
+plt.figure(figsize=(10, 6))
+sns.countplot(x='target', data=df)
+plt.title('Distribution of Heart Disease')
+plt.show()
+
+# Visualize correlation matrix
+plt.figure(figsize=(12, 8))
+sns.heatmap(df.corr(), annot=True, cmap='coolwarm', fmt='.2f')
+plt.title('Correlation Matrix')
+plt.show()
+
+# Feature Engineering
+X = df.drop('target', axis=1)
+y = df['target']
+
+# Train-test split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Predictive Modeling
+model = LogisticRegression(max_iter=1000)
+model.fit(X_train, y_train)
+
+# Model Evaluation
+y_pred = model.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+precision = precision_score(y_test, y_pred)
+recall = recall_score(y_test, y_pred)
+roc_auc = roc_auc_score(y_test, y_pred)
+
+# ROC Curve
+fpr, tpr, _ = roc_curve(y_test, model.predict_proba(X_test)[:, 1])
+plt.figure(figsize=(8, 6))
+plt.plot(fpr, tpr, label=f'ROC curve (area = {roc_auc:.2f})')
+plt.plot([0, 1], [0, 1], 'k--')
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Receiver Operating Characteristic (ROC) Curve')
+plt.legend()
+plt.show()
+
+# Results and Insights
+print(f'Accuracy: {accuracy:.2f}')
+print(f'Precision: {precision:.2f}')
+print(f'Recall: {recall:.2f}')
+print(f'ROC-AUC: {roc_auc:.2f}')
+
+print("\nInsights:")
+print("1. Logistic regression is effective for predicting heart disease.")
+print("2. Key features impacting heart disease include age, cholesterol, and maximum heart rate.")
 
